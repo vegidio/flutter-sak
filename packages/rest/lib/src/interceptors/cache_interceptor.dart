@@ -26,12 +26,15 @@ class CacheInterceptor extends Interceptor {
     final cached = _cache.get(key);
 
     if (cached != null) {
+      final headers = Headers.fromMap(cached.headers.map);
+      headers.add('x-cache', 'HIT');
+
       handler.resolve(
         Response(
           requestOptions: options,
           data: cached.data,
           statusCode: cached.statusCode,
-          headers: cached.headers,
+          headers: headers,
           extra: {...cached.extra, 'fromCache': true},
         ),
       );

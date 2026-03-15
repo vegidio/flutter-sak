@@ -5,7 +5,9 @@ import 'cache/response_cache.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/cache_interceptor.dart';
 import 'interceptors/header_interceptor.dart';
+import 'interceptors/log_interceptor.dart';
 import 'interceptors/retry_interceptor.dart';
+import 'log/log_policy.dart';
 import 'rest_configuration.dart';
 import 'rest_error.dart';
 import 'rest_request.dart';
@@ -36,6 +38,10 @@ class RestClient {
     }
 
     _dio.interceptors.add(RetryInterceptor(configuration.retryPolicy, _dio));
+
+    if (configuration.logPolicy.logLevel != LogLevel.none) {
+      _dio.interceptors.add(LoggingInterceptor(configuration.logPolicy));
+    }
   }
 
   Future<RestResponse<T>> send<T>(RestRequest request, {T Function(dynamic json)? decoder}) async {

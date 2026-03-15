@@ -12,40 +12,6 @@ import 'package:rest/src/interceptors/retry_interceptor.dart';
 
 import 'helpers.dart';
 
-// A mock HTTP adapter that returns configurable responses
-class MockHttpAdapter implements HttpClientAdapter {
-  Response<dynamic>? nextResponse;
-  DioException? nextError;
-  int callCount = 0;
-  List<RequestOptions> requests = [];
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<List<int>>? requestStream, Future<void>? cancelFuture) async {
-    callCount++;
-    requests.add(options);
-
-    if (nextError != null) {
-      throw nextError!;
-    }
-
-    final response = nextResponse ??
-        Response(
-          requestOptions: options,
-          data: '{"ok": true}',
-          statusCode: 200,
-        );
-
-    return ResponseBody.fromString(
-      response.data?.toString() ?? '',
-      response.statusCode ?? 200,
-      headers: response.headers.map.map((key, value) => MapEntry(key, value)),
-    );
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
 void main() {
   group('HeaderInterceptor', () {
     late Dio dio;
@@ -139,6 +105,25 @@ void main() {
       await dio.get('/test', options: Options(extra: {'cacheable': false}));
 
       expect(mockAdapter.callCount, 2);
+    });
+
+    test('cached response includes x-cache HIT header', () async {
+      const policy = CachePolicy(enabled: true, ttl: Duration(seconds: 60));
+      dio.interceptors.add(CacheInterceptor(policy, cache));
+
+      await dio.get('/test');
+      final response = await dio.get('/test');
+
+      expect(response.headers.value('x-cache'), 'HIT');
+    });
+
+    test('non-cached response does not include x-cache header', () async {
+      const policy = CachePolicy(enabled: true, ttl: Duration(seconds: 60));
+      dio.interceptors.add(CacheInterceptor(policy, cache));
+
+      final response = await dio.get('/test');
+
+      expect(response.headers.value('x-cache'), isNull);
     });
 
     test('does not cache non-2xx responses', () async {
@@ -244,11 +229,7 @@ void main() {
 
       expect(
         () => dio.get('/test'),
-        throwsA(isA<DioException>().having(
-          (e) => e.error,
-          'error',
-          isA<TokenRefreshError>(),
-        )),
+        throwsA(isA<DioException>().having((e) => e.error, 'error', isA<TokenRefreshError>())),
       );
       tokenManager.dispose();
     });
@@ -277,27 +258,23 @@ void main() {
       final adapter = _FailThenSucceedAdapter(failCount: 10); // Always fails
       dio.httpClientAdapter = adapter;
 
-      final policy = RetryPolicy(
-        maxAttempts: 2,
-        delay: const Duration(milliseconds: 1),
-      );
+      final policy = RetryPolicy(maxAttempts: 2, delay: const Duration(milliseconds: 1));
       dio.interceptors.add(RetryInterceptor(policy, dio));
 
       expect(() => dio.get('/test'), throwsA(isA<DioException>()));
     });
 
     test('does not retry non-retryable errors', () async {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://api.example.com',
-        validateStatus: (status) => status != null && status >= 200 && status < 300,
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.example.com',
+          validateStatus: (status) => status != null && status >= 200 && status < 300,
+        ),
+      );
       final adapter = _ErrorCodeAdapter(statusCode: 404);
       dio.httpClientAdapter = adapter;
 
-      final policy = RetryPolicy(
-        maxAttempts: 3,
-        delay: const Duration(milliseconds: 1),
-      );
+      final policy = RetryPolicy(maxAttempts: 3, delay: const Duration(milliseconds: 1));
       dio.interceptors.add(RetryInterceptor(policy, dio));
 
       await expectLater(() => dio.get('/test'), throwsA(isA<DioException>()));
@@ -308,16 +285,10 @@ void main() {
     test('retries on 5xx errors', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://api.example.com'));
       // Fail with 500 twice, then succeed
-      final adapter = _FailWithStatusThenSucceedAdapter(
-        failStatusCode: 500,
-        failCount: 1,
-      );
+      final adapter = _FailWithStatusThenSucceedAdapter(failStatusCode: 500, failCount: 1);
       dio.httpClientAdapter = adapter;
 
-      final policy = RetryPolicy(
-        maxAttempts: 3,
-        delay: const Duration(milliseconds: 1),
-      );
+      final policy = RetryPolicy(maxAttempts: 3, delay: const Duration(milliseconds: 1));
       dio.interceptors.add(RetryInterceptor(policy, dio));
 
       final response = await dio.get('/test');
@@ -330,33 +301,26 @@ void main() {
       final client = RestClient(RestConfiguration(baseUrl: 'https://api.example.com'));
 
       // We can't easily mock the internal Dio, so test the error path instead
-      expect(
-        () => client.send(const RestRequest(path: '/nonexistent')),
-        throwsA(isA<RestError>()),
-      );
+      expect(() => client.send(const RestRequest(path: '/nonexistent')), throwsA(isA<RestError>()));
       client.dispose();
     });
 
     test('send throws NetworkError on connection issues', () async {
-      final client = RestClient(RestConfiguration(
-        baseUrl: 'https://localhost:1', // Unreachable
-        retryPolicy: RetryPolicy(maxAttempts: 0),
-      ));
-
-      expect(
-        () => client.send(const RestRequest(path: '/test')),
-        throwsA(isA<NetworkError>()),
+      final client = RestClient(
+        RestConfiguration(
+          baseUrl: 'https://localhost:1', // Unreachable
+          retryPolicy: RetryPolicy(maxAttempts: 0),
+        ),
       );
+
+      expect(() => client.send(const RestRequest(path: '/test')), throwsA(isA<NetworkError>()));
       client.dispose();
     });
 
     test('send throws DecodingError when decoder fails', () async {
       // Create a Dio with mock adapter to simulate a successful response
       // that then fails during decoding
-      final config = RestConfiguration(
-        baseUrl: 'https://api.example.com',
-        retryPolicy: RetryPolicy(maxAttempts: 0),
-      );
+      final config = RestConfiguration(baseUrl: 'https://api.example.com', retryPolicy: RetryPolicy(maxAttempts: 0));
       final client = RestClient(config);
 
       // We test the decoding error path by providing a decoder that throws

@@ -59,11 +59,7 @@ void main() {
 
   group('RestResponse', () {
     test('creates with required parameters', () {
-      const response = RestResponse<String>(
-        body: 'hello',
-        statusCode: 200,
-        headers: {},
-      );
+      const response = RestResponse<String>(body: 'hello', statusCode: 200, headers: {});
 
       expect(response.body, 'hello');
       expect(response.statusCode, 200);
@@ -181,11 +177,7 @@ void main() {
     });
 
     test('creates with custom values', () {
-      const policy = CachePolicy(
-        enabled: true,
-        ttl: Duration(minutes: 5),
-        maxEntries: 50,
-      );
+      const policy = CachePolicy(enabled: true, ttl: Duration(minutes: 5), maxEntries: 50);
       expect(policy.enabled, true);
       expect(policy.ttl, const Duration(minutes: 5));
       expect(policy.maxEntries, 50);
@@ -200,10 +192,7 @@ void main() {
     });
 
     test('creates with custom values', () {
-      final policy = RetryPolicy(
-        maxAttempts: 5,
-        delay: const Duration(milliseconds: 500),
-      );
+      final policy = RetryPolicy(maxAttempts: 5, delay: const Duration(milliseconds: 500));
       expect(policy.maxAttempts, 5);
       expect(policy.delay, const Duration(milliseconds: 500));
     });
@@ -264,10 +253,7 @@ void main() {
       final error = DioException(
         type: DioExceptionType.badResponse,
         requestOptions: RequestOptions(path: '/test'),
-        response: Response(
-          requestOptions: RequestOptions(path: '/test'),
-          statusCode: 401,
-        ),
+        response: Response(requestOptions: RequestOptions(path: '/test'), statusCode: 401),
       );
       expect(policy.shouldRetry(error), false);
     });
@@ -288,17 +274,12 @@ void main() {
     });
 
     test('accepts custom shouldRetry predicate', () {
-      final policy = RetryPolicy(
-        shouldRetry: (error) => error.response?.statusCode == 429,
-      );
+      final policy = RetryPolicy(shouldRetry: (error) => error.response?.statusCode == 429);
 
       final retryable = DioException(
         type: DioExceptionType.badResponse,
         requestOptions: RequestOptions(path: '/test'),
-        response: Response(
-          requestOptions: RequestOptions(path: '/test'),
-          statusCode: 429,
-        ),
+        response: Response(requestOptions: RequestOptions(path: '/test'), statusCode: 429),
       );
 
       final nonRetryable = DioException(

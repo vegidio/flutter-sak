@@ -1,4 +1,5 @@
 import 'cache/cache_policy.dart';
+import 'log/log_policy.dart';
 import 'retry/retry_policy.dart';
 
 class RestConfiguration {
@@ -6,6 +7,7 @@ class RestConfiguration {
   final Map<String, String> defaultHeaders;
   final RetryPolicy retryPolicy;
   final CachePolicy cachePolicy;
+  final LogPolicy logPolicy;
   final Future<String> Function()? tokenProvider;
   final Future<String> Function()? tokenRefresher;
   final int preemptiveRefreshSeconds;
@@ -15,6 +17,7 @@ class RestConfiguration {
     this.defaultHeaders = const {},
     RetryPolicy? retryPolicy,
     this.cachePolicy = const CachePolicy(),
+    this.logPolicy = const LogPolicy(),
     this.tokenProvider,
     this.tokenRefresher,
     this.preemptiveRefreshSeconds = 60,

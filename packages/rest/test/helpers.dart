@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+
 /// Creates a test JWT token with the given expiration time.
 /// The token is structurally valid but not cryptographically signed.
 String createTestJwt({required DateTime expiresAt}) {
@@ -20,3 +22,36 @@ String createExpiredJwt() => createTestJwt(expiresAt: DateTime.now().subtract(co
 /// Creates a JWT that expires within the given duration.
 String createExpiringSoonJwt({Duration expiresIn = const Duration(seconds: 10)}) =>
     createTestJwt(expiresAt: DateTime.now().add(expiresIn));
+
+/// A mock HTTP adapter that returns configurable responses.
+class MockHttpAdapter implements HttpClientAdapter {
+  Response<dynamic>? nextResponse;
+  DioException? nextError;
+  int callCount = 0;
+  List<RequestOptions> requests = [];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    callCount++;
+    requests.add(options);
+
+    if (nextError != null) {
+      throw nextError!;
+    }
+
+    final response = nextResponse ?? Response(requestOptions: options, data: '{"ok": true}', statusCode: 200);
+
+    return ResponseBody.fromString(
+      response.data?.toString() ?? '',
+      response.statusCode ?? 200,
+      headers: response.headers.map.map((key, value) => MapEntry(key, value)),
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}

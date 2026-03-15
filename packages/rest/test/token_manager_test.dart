@@ -70,11 +70,7 @@ void main() {
         );
 
         // Launch multiple concurrent refresh calls
-        final results = await Future.wait([
-          manager.refreshToken(),
-          manager.refreshToken(),
-          manager.refreshToken(),
-        ]);
+        final results = await Future.wait([manager.refreshToken(), manager.refreshToken(), manager.refreshToken()]);
 
         // All should return the same token
         expect(results, everyElement(newToken));

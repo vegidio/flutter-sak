@@ -1,4 +1,5 @@
 export 'src/cache/cache_policy.dart';
+export 'src/log/log_policy.dart';
 export 'src/rest_client.dart';
 export 'src/rest_configuration.dart';
 export 'src/rest_error.dart';

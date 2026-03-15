@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(melos bootstrap:*)",
-      "Bash(dart analyze:*)",
-      "Bash(flutter pub:*)"
-    ]
-  }
-}
