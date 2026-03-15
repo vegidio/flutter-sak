@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_sak_rest/rest.dart';
+import 'package:flutter_sak_rest/src/interceptors/log_interceptor.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:rest/src/interceptors/log_interceptor.dart';
-import 'package:rest/src/log/log_policy.dart';
 
 import 'helpers.dart';
 

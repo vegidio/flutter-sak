@@ -1,14 +1,14 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_sak_rest/rest.dart';
+import 'package:flutter_sak_rest/src/auth/token_manager.dart';
+import 'package:flutter_sak_rest/src/cache/response_cache.dart';
+import 'package:flutter_sak_rest/src/interceptors/auth_interceptor.dart';
+import 'package:flutter_sak_rest/src/interceptors/cache_interceptor.dart';
+import 'package:flutter_sak_rest/src/interceptors/header_interceptor.dart';
+import 'package:flutter_sak_rest/src/interceptors/retry_interceptor.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rest/rest.dart';
-import 'package:rest/src/auth/token_manager.dart';
-import 'package:rest/src/cache/response_cache.dart';
-import 'package:rest/src/interceptors/auth_interceptor.dart';
-import 'package:rest/src/interceptors/cache_interceptor.dart';
-import 'package:rest/src/interceptors/header_interceptor.dart';
-import 'package:rest/src/interceptors/retry_interceptor.dart';
 
 import 'helpers.dart';
 

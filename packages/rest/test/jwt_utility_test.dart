@@ -1,5 +1,5 @@
+import 'package:flutter_sak_rest/src/auth/jwt_utility.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rest/src/auth/jwt_utility.dart';
 
 import 'helpers.dart';
 

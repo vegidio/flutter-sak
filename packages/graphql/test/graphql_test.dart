@@ -1,6 +1,5 @@
+import 'package:flutter_sak_graphql/graphql.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:graphql/graphql.dart';
 
 void main() {
   test('adds one to input values', () {

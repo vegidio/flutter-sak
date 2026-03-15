@@ -1,4 +1,4 @@
-name: rest
+name: flutter_sak_rest
 description: "A REST API client library with JWT auth, retry, and caching support."
 version: 0.0.1
 homepage:

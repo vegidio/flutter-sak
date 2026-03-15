@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_sak_rest/rest.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rest/rest.dart';
 
 void main() {
   group('HttpMethod', () {

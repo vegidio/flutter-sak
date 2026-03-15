@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_sak_rest/src/cache/response_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rest/src/cache/response_cache.dart';
 
 void main() {
   group('ResponseCache', () {
