@@ -10,8 +10,9 @@ void main() {
         final validToken = createValidJwt();
         final manager = TokenManager(
           tokenProvider: () async => validToken,
-          tokenRefresher: () async => 'should-not-be-called',
+          tokenRefresher: (_) async => 'should-not-be-called',
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         final token = await manager.getValidToken();
@@ -25,8 +26,9 @@ void main() {
 
         final manager = TokenManager(
           tokenProvider: () async => expiredToken,
-          tokenRefresher: () async => newToken,
+          tokenRefresher: (_) async => newToken,
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         final token = await manager.getValidToken();
@@ -42,11 +44,12 @@ void main() {
 
         final manager = TokenManager(
           tokenProvider: () async => createExpiredJwt(),
-          tokenRefresher: () async {
+          tokenRefresher: (_) async {
             refreshCount++;
             return newToken;
           },
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         final token = await manager.refreshToken();
@@ -61,12 +64,13 @@ void main() {
 
         final manager = TokenManager(
           tokenProvider: () async => createExpiredJwt(),
-          tokenRefresher: () async {
+          tokenRefresher: (_) async {
             refreshCount++;
             await Future<void>.delayed(const Duration(milliseconds: 50));
             return newToken;
           },
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         // Launch multiple concurrent refresh calls
@@ -82,11 +86,12 @@ void main() {
       test('propagates error to concurrent callers on failure', () async {
         final manager = TokenManager(
           tokenProvider: () async => createExpiredJwt(),
-          tokenRefresher: () async {
+          tokenRefresher: (_) async {
             await Future<void>.delayed(const Duration(milliseconds: 10));
             throw Exception('refresh failed');
           },
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         // Launch two concurrent refresh calls so the completer's future is listened to
@@ -105,7 +110,7 @@ void main() {
 
         final manager = TokenManager(
           tokenProvider: () async => createExpiredJwt(),
-          tokenRefresher: () async {
+          tokenRefresher: (_) async {
             callCount++;
             if (callCount == 1) {
               await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -114,6 +119,7 @@ void main() {
             return newToken;
           },
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         // First call should fail — use two concurrent callers to consume the completer
@@ -135,8 +141,9 @@ void main() {
       test('cancels preemptive refresh timer', () {
         final manager = TokenManager(
           tokenProvider: () async => createValidJwt(),
-          tokenRefresher: () async => createValidJwt(),
+          tokenRefresher: (_) async => createValidJwt(),
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         manager.startPreemptiveRefresh();
@@ -147,8 +154,9 @@ void main() {
       test('can be called multiple times safely', () {
         final manager = TokenManager(
           tokenProvider: () async => createValidJwt(),
-          tokenRefresher: () async => createValidJwt(),
+          tokenRefresher: (_) async => createValidJwt(),
           preemptiveRefreshSeconds: 60,
+          send: (_) async => {},
         );
 
         manager.dispose();

@@ -161,8 +161,9 @@ void main() {
       final validToken = createValidJwt();
       final tokenManager = TokenManager(
         tokenProvider: () async => validToken,
-        tokenRefresher: () async => validToken,
+        tokenRefresher: (_) async => validToken,
         preemptiveRefreshSeconds: 60,
+        send: (_) async => {},
       );
 
       dio.interceptors.add(AuthInterceptor(tokenManager, dio));
@@ -180,8 +181,9 @@ void main() {
 
       final tokenManager = TokenManager(
         tokenProvider: () async => createValidJwt(),
-        tokenRefresher: () async => createValidJwt(),
+        tokenRefresher: (_) async => createValidJwt(),
         preemptiveRefreshSeconds: 60,
+        send: (_) async => {},
       );
 
       dio.interceptors.add(AuthInterceptor(tokenManager, dio));
@@ -202,8 +204,9 @@ void main() {
 
       final tokenManager = TokenManager(
         tokenProvider: () async => expiredToken,
-        tokenRefresher: () async => newToken,
+        tokenRefresher: (_) async => newToken,
         preemptiveRefreshSeconds: 60,
+        send: (_) async => {},
       );
 
       dio.interceptors.add(AuthInterceptor(tokenManager, dio));
@@ -221,8 +224,9 @@ void main() {
 
       final tokenManager = TokenManager(
         tokenProvider: () async => throw Exception('no token'),
-        tokenRefresher: () async => throw Exception('refresh failed'),
+        tokenRefresher: (_) async => throw Exception('refresh failed'),
         preemptiveRefreshSeconds: 60,
+        send: (_) async => {},
       );
 
       dio.interceptors.add(AuthInterceptor(tokenManager, dio));

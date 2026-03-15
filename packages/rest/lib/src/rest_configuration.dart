@@ -1,6 +1,9 @@
 import 'cache/cache_policy.dart';
 import 'log/log_policy.dart';
+import 'rest_request.dart';
 import 'retry/retry_policy.dart';
+
+typedef RefreshSend = Future<Map<String, dynamic>> Function(RestRequest request);
 
 class RestConfiguration {
   final String baseUrl;
@@ -9,7 +12,7 @@ class RestConfiguration {
   final CachePolicy cachePolicy;
   final LogPolicy logPolicy;
   final Future<String> Function()? tokenProvider;
-  final Future<String> Function()? tokenRefresher;
+  final Future<String> Function(RefreshSend send)? tokenRefresher;
   final int preemptiveRefreshSeconds;
 
   RestConfiguration({

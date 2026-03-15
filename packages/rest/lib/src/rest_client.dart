@@ -15,26 +15,49 @@ import 'rest_response.dart';
 
 class RestClient {
   final Dio _dio;
-  final TokenManager? _tokenManager;
+  TokenManager? _tokenManager;
   final ResponseCache _cache;
 
   RestClient(RestConfiguration configuration)
     : _dio = Dio(BaseOptions(baseUrl: configuration.baseUrl)),
-      _tokenManager = configuration.tokenProvider != null && configuration.tokenRefresher != null
-          ? TokenManager(
-              tokenProvider: configuration.tokenProvider!,
-              tokenRefresher: configuration.tokenRefresher!,
-              preemptiveRefreshSeconds: configuration.preemptiveRefreshSeconds,
-            )
-          : null,
+      _tokenManager = null,
       _cache = ResponseCache(maxEntries: configuration.cachePolicy.maxEntries) {
+    // Build the token manager after _dio is initialized, so we can
+    // create a RefreshSend that uses the same Dio instance (with skipAuth).
+    if (configuration.tokenProvider != null && configuration.tokenRefresher != null) {
+      final refresher = configuration.tokenRefresher!;
+
+      Future<Map<String, dynamic>> refreshSend(RestRequest request) async {
+        final response = await _dio.request<dynamic>(
+          request.path,
+          options: Options(
+            method: request.method.name.toUpperCase(),
+            headers: request.headers,
+            extra: {'skipAuth': true},
+          ),
+          data: request.body,
+          queryParameters: request.queryParameters,
+        );
+        return response.data as Map<String, dynamic>;
+      }
+
+      final tokenManager = TokenManager(
+        tokenProvider: configuration.tokenProvider!,
+        tokenRefresher: refresher,
+        send: refreshSend,
+        preemptiveRefreshSeconds: configuration.preemptiveRefreshSeconds,
+      );
+      _tokenManager = tokenManager;
+    }
+
     // Interceptor order: Cache → Headers → Auth → Retry
     _dio.interceptors.add(CacheInterceptor(configuration.cachePolicy, _cache));
     _dio.interceptors.add(HeaderInterceptor(configuration.defaultHeaders));
 
-    if (_tokenManager != null) {
-      _dio.interceptors.add(AuthInterceptor(_tokenManager, _dio));
-      _tokenManager.startPreemptiveRefresh();
+    final tokenManager = _tokenManager;
+    if (tokenManager != null) {
+      _dio.interceptors.add(AuthInterceptor(tokenManager, _dio));
+      tokenManager.startPreemptiveRefresh();
     }
 
     _dio.interceptors.add(RetryInterceptor(configuration.retryPolicy, _dio));

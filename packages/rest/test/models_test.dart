@@ -306,7 +306,7 @@ void main() {
 
     test('creates with all parameters', () {
       Future<String> provider() async => 'token';
-      Future<String> refresher() async => 'new-token';
+      Future<String> refresher(_) async => 'new-token';
 
       final config = RestConfiguration(
         baseUrl: 'https://api.example.com',

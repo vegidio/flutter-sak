@@ -208,21 +208,30 @@ final response = await client.send<LoginResponse>(
 
 ### Automatic token refresh on 401
 
-Provide `tokenRefresher` to fetch a new token when a 401 is received. The client refreshes the token once and retries the original request automatically. Concurrent requests that all hit 401 share a single refresh call.
+Provide `tokenRefresher` to fetch a new token when a 401 is received. The callback receives a `send` function that lets you make HTTP requests using the client's own connection — no need to create a separate client or deal with Dio directly. The client refreshes the token once and retries the original request automatically. Concurrent requests that all hit 401 share a single refresh call.
 
 ```dart
 final client = RestClient(
   RestConfiguration(
     baseUrl: 'https://api.example.com',
     tokenProvider: () async => secureStorage.read('jwt'),
-    tokenRefresher: () async {
-      final newToken = await authService.refresh();
+    tokenRefresher: (send) async {
+      final refreshToken = await secureStorage.read('refreshToken');
+      final response = await send(
+        RestRequest(
+          path: '/auth/refresh',
+          headers: {'Authorization': 'Bearer $refreshToken'},
+        ),
+      );
+      final newToken = response['accessToken'] as String;
       await secureStorage.write('jwt', newToken);
       return newToken;
     },
   ),
 );
 ```
+
+The `send` function accepts a `RestRequest` (the same type used with `client.send()`) and returns the response body as `Map<String, dynamic>`. Auth is automatically skipped on refresh requests so there is no risk of infinite loops.
 
 ### Preemptive JWT refresh
 
@@ -233,8 +242,15 @@ final client = RestClient(
   RestConfiguration(
     baseUrl: 'https://api.example.com',
     tokenProvider: () async => secureStorage.read('jwt'),
-    tokenRefresher: () async {
-      final newToken = await authService.refresh();
+    tokenRefresher: (send) async {
+      final refreshToken = await secureStorage.read('refreshToken');
+      final response = await send(
+        RestRequest(
+          path: '/auth/refresh',
+          headers: {'Authorization': 'Bearer $refreshToken'},
+        ),
+      );
+      final newToken = response['accessToken'] as String;
       await secureStorage.write('jwt', newToken);
       return newToken;
     },
@@ -255,4 +271,5 @@ final client = RestClient(
 | `RestResponse<T>` | Decoded response body + `statusCode` + `headers` |
 | `RetryPolicy` | `maxAttempts` + `delay` + `shouldRetry` predicate |
 | `CachePolicy` | `enabled`, `ttl`, `maxEntries` |
+| `RefreshSend` | Typedef for the `send` function passed to `tokenRefresher` |
 | `RestError` | Sealed error hierarchy thrown on failure |

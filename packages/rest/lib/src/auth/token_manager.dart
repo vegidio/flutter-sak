@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import '../rest_configuration.dart';
 import 'jwt_utility.dart';
 
 class TokenManager {
   final Future<String> Function() _tokenProvider;
-  final Future<String> Function() _tokenRefresher;
+  final Future<String> Function(RefreshSend send) _tokenRefresher;
+  final RefreshSend _send;
   final int _preemptiveRefreshSeconds;
 
   Timer? _refreshTimer;
@@ -12,10 +14,12 @@ class TokenManager {
 
   TokenManager({
     required Future<String> Function() tokenProvider,
-    required Future<String> Function() tokenRefresher,
+    required Future<String> Function(RefreshSend send) tokenRefresher,
+    required RefreshSend send,
     required int preemptiveRefreshSeconds,
   }) : _tokenProvider = tokenProvider,
        _tokenRefresher = tokenRefresher,
+       _send = send,
        _preemptiveRefreshSeconds = preemptiveRefreshSeconds;
 
   void startPreemptiveRefresh() {
@@ -47,7 +51,7 @@ class TokenManager {
     _refreshCompleter = Completer<String>();
 
     try {
-      final newToken = await _tokenRefresher();
+      final newToken = await _tokenRefresher(_send);
       _refreshCompleter!.complete(newToken);
       return newToken;
     } catch (e) {
