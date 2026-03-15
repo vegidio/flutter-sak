@@ -1,5 +1,5 @@
 name: rest
-description: "A new Flutter package project."
+description: "A REST API client library with JWT auth, retry, and caching support."
 version: 0.0.1
 homepage:
 
@@ -10,14 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dio: ^5.9.2
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
-flutter:
